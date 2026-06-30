@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Résumé · access required — Chiam Chee Kong</title>
-  <meta name="description" content="The full résumé is gated. Request access via LinkedIn." />
+  <title>Résumé · by request — Chiam Chee Kong</title>
+  <meta name="description" content="Full résumé and direct contact available on request via LinkedIn." />
   <meta name="robots" content="noindex,nofollow" />
   <meta name="theme-color" content="#f5efe2" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -18,49 +18,38 @@
   <header class="topbar topbar--resume" role="banner">
     <div class="topbar__mark">
       <a href="./index.html" class="topbar__sigil topbar__sigil--link">← Folio</a>
-      <span class="topbar__meta"><span class="dot" aria-hidden="true"></span>Restricted</span>
+      <span class="topbar__meta"><span class="dot" aria-hidden="true"></span>By request</span>
     </div>
-    <nav class="topbar__nav" aria-label="Gate actions">
-      <a href="https://www.linkedin.com/in/chiamck/" rel="noopener" class="topbar__cta">Request access ↗</a>
+    <nav class="topbar__nav" aria-label="Résumé actions">
+      <a href="https://www.linkedin.com/in/chiamck/" rel="noopener" class="topbar__cta">Request via LinkedIn ↗</a>
     </nav>
   </header>
 
   <main class="gate" id="main">
 
     <section class="gate__panel" aria-labelledby="gate-title">
-      <p class="kicker">§ Restricted</p>
+      <p class="kicker">§ By request</p>
       <h1 id="gate-title" class="gate__title">Résumé &amp; <em>direct contact</em>.</h1>
       <p class="gate__lede">
         The full résumé — including phone, email, and direct contact — is kept off the open web.
-        If you have the access code, enter it below. Otherwise, drop me a note on LinkedIn and I&rsquo;ll
-        share access.
+        Drop me a note on LinkedIn and I&rsquo;ll share it with you directly.
       </p>
 
-      <form class="gate__form" id="gate-form" autocomplete="off" novalidate>
-        <label class="gate__label" for="gate-pw">Access code</label>
-        <div class="gate__row">
-          <input id="gate-pw" name="pw" type="password" autocomplete="current-password"
-                 placeholder="•••••••••" required
-                 spellcheck="false" />
-          <button class="gate__btn" type="submit" id="gate-btn">Unlock →</button>
-        </div>
-        <p class="gate__status" id="gate-status" aria-live="polite"></p>
-      </form>
+      <div class="gate__row">
+        <a class="gate__btn" href="https://www.linkedin.com/in/chiamck/" rel="noopener">Request via LinkedIn →</a>
+      </div>
 
       <div class="gate__alt">
-        <p>No code? <a href="https://www.linkedin.com/in/chiamck/" rel="noopener">Request via LinkedIn ↗</a></p>
+        <p>Prefer email? Mention it in your LinkedIn note and I&rsquo;ll reply there.</p>
       </div>
     </section>
 
     <aside class="gate__why">
-      <p class="kicker">§ Why gated</p>
+      <p class="kicker">§ Why by request</p>
       <p>
-        Putting a phone number on a public page invites bots more than recruiters. The cipher below is
-        AES-GCM with a PBKDF2-SHA256 derived key. No password leaves the browser; nothing about the
-        session is logged.
-      </p>
-      <p class="gate__cipher">
-        cipher: <span id="cipher-info">resume.enc.json</span>
+        Putting a phone number and personal email on a public page invites bots more than recruiters.
+        Reaching out via LinkedIn keeps the details with people who actually want to talk — and gets you
+        a faster, more personal reply.
       </p>
     </aside>
 
@@ -70,85 +59,10 @@
     <div class="footer__rule" aria-hidden="true"></div>
     <div class="footer__grid">
       <p class="footer__mark">CCK · Résumé · 2026</p>
-      <p class="footer__cite">AES-GCM · PBKDF2 · client-side decryption.</p>
+      <p class="footer__cite">Available on request.</p>
       <p class="footer__legal">© Chiam Chee Kong.</p>
     </div>
   </footer>
 
-  <script>
-    (function () {
-      const form   = document.getElementById('gate-form');
-      const input  = document.getElementById('gate-pw');
-      const btn    = document.getElementById('gate-btn');
-      const status = document.getElementById('gate-status');
-      const cipherInfo = document.getElementById('cipher-info');
-
-      const b64dec = (s) => {
-        const bin = atob(s);
-        const out = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
-        return out;
-      };
-
-      let blob = null;
-      fetch('./resume.enc.json', { cache: 'no-store' })
-        .then(r => { if (!r.ok) throw new Error('cipher not found'); return r.json(); })
-        .then(j => {
-          blob = j;
-          cipherInfo.textContent = `resume.enc.json · ${j.alg} · ${j.kdf}/${j.iterations.toLocaleString()} · ${j.bytes.toLocaleString()} bytes`;
-        })
-        .catch(err => {
-          status.textContent = 'Cipher unavailable. Try refresh.';
-          status.classList.add('gate__status--err');
-          console.error(err);
-        });
-
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        if (!blob) { status.textContent = 'Cipher still loading…'; return; }
-        const password = input.value;
-        if (!password) return;
-
-        btn.disabled = true;
-        status.classList.remove('gate__status--err');
-        status.textContent = 'Deriving key…';
-
-        try {
-          const enc = new TextEncoder();
-          const baseKey = await crypto.subtle.importKey(
-            'raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']
-          );
-          const key = await crypto.subtle.deriveKey(
-            { name: 'PBKDF2', salt: b64dec(blob.salt), iterations: blob.iterations, hash: 'SHA-256' },
-            baseKey,
-            { name: 'AES-GCM', length: blob.keyLength },
-            false,
-            ['decrypt']
-          );
-          status.textContent = 'Decrypting…';
-          const buf = await crypto.subtle.decrypt(
-            { name: 'AES-GCM', iv: b64dec(blob.iv) },
-            key,
-            b64dec(blob.ct)
-          );
-          const html = new TextDecoder().decode(buf);
-
-          // Replace document with decrypted résumé.
-          document.open();
-          document.write(html);
-          document.close();
-        } catch (err) {
-          btn.disabled = false;
-          input.value = '';
-          input.focus();
-          status.textContent = 'Wrong code.';
-          status.classList.add('gate__status--err');
-        }
-      });
-
-      // Auto-focus on load.
-      window.addEventListener('load', () => input.focus());
-    })();
-  </script>
 </body>
 </html>
