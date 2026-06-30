@@ -58,7 +58,7 @@ At your domain registrar, set the following records on `chiamck.site`:
 **`www` — CNAME:**
 
 ```
-www  →  samurai-bot.github.io
+www  →  chiam-ck.github.io
 ```
 
 After DNS propagates (a few minutes to ~24 hours), GitHub will issue a
